@@ -1,0 +1,52 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔍 Checkout code
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4.2.0
+        with:
+          node-version: 20 # إصدار مستقر وممتاز لـ Vite 8
+          cache: npm
+
+      - name: 📥 Install dependencies
+        run: npm install # تم التغيير لضمان تثبيت أدوات البناء
+
+      - name: 🔨 Build project
+        run: npm run build
+
+      - name: 📄 Configure GitHub Pages
+        uses: actions/configure-pages@v5.0.0
+
+      - name: 📤 Upload build artifacts
+        uses: actions/upload-pages-artifact@v3.0.1
+        with:
+          path: dist # تأكد أن هذا هو المجلد الناتج عن npm run build
+
+      - name: 🚀 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4.0.6
